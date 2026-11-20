@@ -175,7 +175,7 @@ Opcional después: exponer resultados por API (Node/TS) y front con diseño prop
 
 ## 8. Estado actual
 
-- [ ] Fase 0 — Setup
+- [x] Fase 0 — Setup
 - [ ] Fase 1 — Datos globales
 - [ ] Fase 2 — Regímenes globales
 - [ ] Fase 3 — Argentina
@@ -183,6 +183,11 @@ Opcional después: exponer resultados por API (Node/TS) y front con diseño prop
 - [ ] Fase 5 — Activos + backtest
 - [ ] Fase 6 — Dashboard
 
-**Última sesión:** (completar)
-**Próximo paso:** Fase 0.
-**Notas / dudas abiertas:** (completar)
+**Última sesión:** 2026-11-20 — Fase 0 completa. Entorno `uv` (Python 3.12), estructura de carpetas, `.gitignore`, `.env` con FRED_API_KEY, repo git `modelo-regimenes`. Notebook `01_exploracion_fred.ipynb`: baja `T10Y2Y` (desde 1976-06) y `USREC`, guarda crudos en `data/raw` (Parquet con fecha), grafica la curva con recesiones sombreadas y ticks cada 5 años.
+Conceptos vistos: entorno virtual, pd.Series con índice de fechas, `.loc` vs `.iloc`, NaN por feriados, qué es una inversión de curva, por qué `USREC` es solo validación.
+Conclusiones: la inversión precedió a casi todas las recesiones pero con rezago muy variable; 2019→2020 es dudoso (causa externa: pandemia); 2022–24 fue una falsa alarma larga y profunda; la recesión suele llegar tras la des-inversión. Una sola señal no alcanza → combinar variables.
+**Próximo paso:** Fase 1 — pasar la bajada de datos a `src/data/fred.py`, bajar las series de 4.1 y pasarlas a frecuencia mensual.
+**Notas / dudas abiertas:**
+- La curva viene bajando de nuevo hacia 0 desde arriba (fines de 2026): ¿se mueve la tasa a 2a o la de 10a? → sumar `DGS2` y `DGS10` en Fase 1.
+- ¿Por qué 2022–24 se invirtió sin recesión? (estímulos post-COVID, gasto fiscal, distorsión por QE).
+- Idea: spread largo 10a−3m desde 1953 (`GS10` − `TB3MS`) para tener ~10 recesiones en vez de 6. Ojo: `TB3MS` usa base descuento.
