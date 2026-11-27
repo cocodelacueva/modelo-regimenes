@@ -26,6 +26,7 @@ No reemplaza asesoramiento financiero profesional.
   Toda evaluación debe ser **walk-forward / out-of-sample**.
 - Recordar que los datos macro se **revisan** y se **publican con rezago** (ej. el IPC de un mes sale a mediados del siguiente). Usar fechas de publicación, no de referencia, cuando importe.
 - Para datos argentinos: siempre trabajar en **USD (CCL) o en términos reales (ajustado por IPC)**, nunca en pesos nominales.
+- **Explicar el código de pandas línea por línea**: qué hace cada método y por qué. No dar pandas por sabido; balancear la explicación económica con la de código.
 
 ## 3. Stack
 
@@ -183,11 +184,16 @@ Opcional después: exponer resultados por API (Node/TS) y front con diseño prop
 - [ ] Fase 5 — Activos + backtest
 - [ ] Fase 6 — Dashboard
 
-**Última sesión:** 2026-11-20 — Fase 0 completa. Entorno `uv` (Python 3.12), estructura de carpetas, `.gitignore`, `.env` con FRED_API_KEY, repo git `modelo-regimenes`. Notebook `01_exploracion_fred.ipynb`: baja `T10Y2Y` (desde 1976-06) y `USREC`, guarda crudos en `data/raw` (Parquet con fecha), grafica la curva con recesiones sombreadas y ticks cada 5 años.
-Conceptos vistos: entorno virtual, pd.Series con índice de fechas, `.loc` vs `.iloc`, NaN por feriados, qué es una inversión de curva, por qué `USREC` es solo validación.
-Conclusiones: la inversión precedió a casi todas las recesiones pero con rezago muy variable; 2019→2020 es dudoso (causa externa: pandemia); 2022–24 fue una falsa alarma larga y profunda; la recesión suele llegar tras la des-inversión. Una sola señal no alcanza → combinar variables.
-**Próximo paso:** Fase 1 — pasar la bajada de datos a `src/data/fred.py`, bajar las series de 4.1 y pasarlas a frecuencia mensual.
+**Última sesión:** 2026-11-27 — Fase 1 en curso. `src/data/fred.py` (`bajar`, `guardar_crudo` con ruta absoluta, `bajar_todas`; 16 series incl. GS10, TB3MS, BAA). `src/features/build.py` (`a_mensual`, `panel_mensual` sin mutar el dict de entrada, `agregar_sustitutos`). Notebook `02_regimenes_globales.ipynb` (renombrar a `02_datos_globales`).
+**Decisiones:**
+- Modelo global desde **1976** (6 recesiones y la estanflación adentro), en vez de 2006 (solo 2 recesiones).
+- Sustitutos largos: `GS10 − TB3MS` en lugar de `T10Y3M` (TB3MS convertida de base descuento a rendimiento real con 365·d/(360−91·d); sesgo medio vs. oficial de +0,12 a +0,01 pp) y `BAA − GS10` en lugar de `BAA10Y` (corr 0,99998, diferencia máx. 0,01 pp).
+- VIX y dólar (`DTWEXBGS`) quedan fuera del modelo global; el dólar vuelve en la parte argentina.
+- Mensualización: `mean` para series diarias/semanales, `last` para mensuales, índice a fin de mes (`"ME"`).
+Conceptos vistos: módulos y `Path(__file__)`, mutación por referencia (dicts/DataFrames + `.copy()`), `resample("ME")` mean vs last, display truncado de pandas, estacionariedad (series crudas / transformadas / a decidir), muestra efectiva vs. cantidad de filas, validar un sustituto con correlación **y** diferencia (`describe`), base descuento, operaciones vectorizadas, `iloc`, `.corr()`.
+**Próximo paso:** features — transformaciones (inflación interanual de CPIAUCSL, variación 12m de INDPRO, cambio 12m de UNRATE), decidir DGS2/DGS10/FEDFUNDS (cambio vs. tasa real), descartar el mes en curso incompleto, tratar el NaN de oct-2025 (CPI y UNRATE) **sin look-ahead** (nada de interpolar), y considerar el rezago de publicación de los datos mensuales.
 **Notas / dudas abiertas:**
-- La curva viene bajando de nuevo hacia 0 desde arriba (fines de 2026): ¿se mueve la tasa a 2a o la de 10a? → sumar `DGS2` y `DGS10` en Fase 1.
+- La curva viene bajando de nuevo hacia 0 (fines de 2026): ¿se mueve la tasa a 2a o la de 10a? → ya están bajadas `DGS2` y `DGS10`, falta mirarlo.
 - ¿Por qué 2022–24 se invirtió sin recesión? (estímulos post-COVID, gasto fiscal, distorsión por QE).
-- Idea: spread largo 10a−3m desde 1953 (`GS10` − `TB3MS`) para tener ~10 recesiones en vez de 6. Ojo: `TB3MS` usa base descuento.
+- Pendiente: función para leer los crudos de `data/raw` en vez de bajar todo de FRED cada vez.
+- `get_series` trae datos revisados (no vintage) → importa en el backtest (Fase 5).
